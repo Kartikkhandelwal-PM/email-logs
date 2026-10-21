@@ -47,3 +47,24 @@ or a webhook that KDK Software receives and saves.
 
 `client_reference` and the `tag` field in the webhook let KDK pass its own values (for example
 an internal ID) through ZeptoMail with each email.
+
+## What the Send Email API gives us (checked against the sending documentation)
+
+Source: https://www.zoho.com/cpaas/help/api/email-sending.html
+
+When KDK Software sends an email it can pass these fields, and they are what let the logs page show
+things ZeptoMail does not know on its own.
+
+| Send field | Use for the logs page |
+|---|---|
+| `client_reference` (string, our own ID) | Carry KDK's own ID, for example `BL-148-3`. ZeptoMail returns it in the logs (`client_reference`) and in webhooks (`email_info.client_reference`), so a log row can be matched back to KDK's record. The module, mode and sender can be looked up from that record. |
+| `mime_headers` (custom key/value pairs) | Could carry module (GST / TDS / ITR) and mode. Not confirmed whether they come back in logs or webhooks. Test before relying on it. |
+| `attachments` (name, type, content) | KDK knows the file names and count at send time, so attachments must be saved by KDK. The logs do not return them. |
+| `cc` / `bcc` | Returned in webhook `email_info`, so CC and BCC can be shown. |
+| `track_opens` / `track_clicks` | `track_opens` must be on for the Opened at time to exist. Clicks are not shown on the page. |
+
+The send response returns one `request_id` per call (plus a per-recipient `data` list). KDK should save
+`request_id` next to its own bulk ID (BL-148) at send time. That is what ties ZeptoMail's log rows to our
+bulk sends.
+
+Not on that page: `tag`, `bounce_address`, batch sending, and any limits on recipients or attachment size.
