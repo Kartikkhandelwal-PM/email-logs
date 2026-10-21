@@ -35,6 +35,13 @@ const DIAGNOSTICS = {
 
 const MODULES = ['GST', 'TDS', 'ITR']
 
+// Made-up identifiers in the real formats. PAN: AAAPA9999A. GSTIN: 2-digit state + PAN + entity + Z + check.
+const AZ = 'ABCDEFGHJKLMNPQRSTUVWXYZ'
+const letter = () => AZ[Math.floor(rand() * AZ.length)]
+const digits = (n) => Array.from({ length: n }, () => Math.floor(rand() * 10)).join('')
+const fakePan = () => `${letter()}${letter()}${letter()}${pick(['P', 'C', 'F'])}${letter()}${digits(4)}${letter()}`
+const fakeGstin = () => `${pick(['27', '29', '07', '24', '33'])}${fakePan()}1Z${pick([...'0123456789ABCDEFGHJK'])}`
+
 // Bulk sends, by module. `event` is what triggered the send; `subject` is each email's own subject line.
 const CAMPAIGNS = {
   GST: [
@@ -86,9 +93,9 @@ for (const mod of Object.keys(CAMPAIGNS)) {
 }
 const STAFF = ['Kartik K.', 'Anita Shah', 'Rohit Mehta', 'Priyanka D.', 'System']
 const SINGLE_SUBJECTS = [
-  ['Your Form 16 is attached', 'manual'], ['GSTR-3B filed: acknowledgement', 'automated'],
-  ['ITR-V acknowledgement attached', 'automated'], ['Query on your TDS challan', 'manual'],
-  ['Reply to GST notice: documents needed', 'manual'], ['Your Form 26AS summary', 'automated'],
+  ['Your Form 16 is attached', 'manual', 'TDS'], ['GSTR-3B filed: acknowledgement', 'automated', 'GST'],
+  ['ITR-V acknowledgement attached', 'automated', 'ITR'], ['Query on your TDS challan', 'manual', 'TDS'],
+  ['Reply to GST notice: documents needed', 'manual', 'GST'], ['Your Form 26AS summary', 'automated', 'ITR'],
 ]
 
 function pickStatus(isOld) {
@@ -162,9 +169,9 @@ function generate() {
     const sentBy = tpl.mode === 'automated' ? 'System' : pick(STAFF.slice(0, 4))
     const size = c === 1 ? 3200 : c === 4 ? 1450 : c === 9 ? 820 : c === 20 ? 2100 : 25 + Math.floor(rand() * 180)
     for (let i = 0; i < size; i++) {
-      const person = pick(FIRST)
       // each email in a bulk send has its own subject and its own attachment count
-      const subj = `${tpl.subject} \u2013 ${person}`
+      // the client's PAN (TDS, ITR) or GSTIN (GST) is normally part of the subject
+      const subj = `${tpl.subject} \u2013 ${mod === 'GST' ? 'GSTIN' : 'PAN'} ${mod === 'GST' ? fakeGstin() : fakePan()}`
       out.push(makeEmail({
         idx: i, requestId, sentAt: new Date(sentAt.getTime() + i * 700), module: mod, triggeredAt: new Date(sentAt.getTime() - (30 + ((c * 7) % 50)) * 1000),
         subject: subj, from: tpl.from, triggerEvent: tpl.event,
@@ -173,12 +180,12 @@ function generate() {
     }
   }
   for (let s = 0; s < 700; s++) {
-    const [baseSubject, mode] = pick(SINGLE_SUBJECTS)
-    const subject = `${baseSubject} (Ref ${Math.floor(rand() * 9000 + 1000)})`
+    const [baseSubject, mode, singleModule] = pick(SINGLE_SUBJECTS)
+    const subject = /Form|ITR|TDS|26AS/.test(baseSubject) ? `${baseSubject} \u2013 PAN ${fakePan()}` : /GST/.test(baseSubject) ? `${baseSubject} \u2013 GSTIN ${fakeGstin()}` : `${baseSubject} (Ref ${Math.floor(rand() * 9000 + 1000)})`
     const requestId = `req-${(reqNo++).toString(16)}${Math.floor(rand() * 1e4)}`
     const sentAt = new Date(now - rand() * 59 * 864e5)
     out.push(makeEmail({
-      idx: 0, requestId, sentAt, module: s % 7 === 0 ? '' : MODULES[s % 3], triggeredAt: new Date(sentAt.getTime() - (2 + (s % 5)) * 1000),
+      idx: 0, requestId, sentAt, module: s % 9 === 0 ? '' : singleModule, triggeredAt: new Date(sentAt.getTime() - (2 + (s % 5)) * 1000),
       subject, from: mode === 'automated' ? 'noreply@kdkclient.com' : 'team@kdkclient.com',
       type: 'single', mode, campaign: '', agent,
       attachments: rand() < 0.6 ? 0 : 1 + Math.floor(rand() * 3), sentBy: mode === 'automated' ? 'System' : pick(STAFF.slice(0, 4)),
