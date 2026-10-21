@@ -118,9 +118,9 @@ function Home() {
         ) : !total ? (
           <div className="empty"><p><b>No emails found</b></p><p className="muted">Try changing or clearing your filters.</p></div>
         ) : tab === 'bulk' ? (
-          <BulkTable groups={slice(bulkSorted)} cols={bulkCols.visible} sort={sort} onSort={onSort} onMove={bulkCols.move} />
+          <BulkTable groups={slice(bulkSorted)} cols={bulkCols.visible} sort={sort} onSort={onSort} onMove={bulkCols.move} onResize={bulkCols.resize} onResetWidth={bulkCols.resetWidth} />
         ) : (
-          <EmailTable emails={slice(singlesSorted)} cols={columns.visible} onOpen={setSelected} sort={sort} onSort={onSort} selectedId={selected?.email_reference} onMove={columns.move} />
+          <EmailTable emails={slice(singlesSorted)} cols={columns.visible} onOpen={setSelected} sort={sort} onSort={onSort} selectedId={selected?.email_reference} onMove={columns.move} onResize={columns.resize} onResetWidth={columns.resetWidth} />
         )}
         </div>
         {!state.loading && !state.error && total > 0 && <div className="panel-corner"><ColumnPicker all={tab === 'bulk' ? BULK_COLUMNS : EMAIL_COLUMNS} {...(tab === 'bulk' ? bulkCols : columns)} /></div>}

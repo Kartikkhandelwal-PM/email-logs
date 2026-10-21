@@ -1,4 +1,4 @@
-import { headDnD } from './columns.jsx'
+import { headDnD, ResizeHandle } from './columns.jsx'
 import { ModeTag, ModuleTag, AttachCell, SentBy, SortHead, ariaSort, fmtNoSec, openBulk } from './ui.jsx'
 
 const pct = (n, total) => (total ? Math.round((n / total) * 100) : 0)
@@ -43,7 +43,7 @@ export const BULK_SORT = {
   processed: (g) => g.counts.processing || 0,
 }
 
-export function BulkTable({ groups, cols, sort, onSort, onMove }) {
+export function BulkTable({ groups, cols, sort, onSort, onMove, onResize, onResetWidth }) {
   // the last column gets 40px extra so its title never runs under the fixed + button
   const widthOf = (c, i) => (c.w ? c.w + (i === cols.length - 1 ? 40 : 0) : 0)
   const fixed = cols.reduce((n, c, i) => n + widthOf(c, i), 0)
@@ -56,7 +56,7 @@ export function BulkTable({ groups, cols, sort, onSort, onMove }) {
       <thead>
         <tr>
           {cols.map((c, i) => (
-            <th key={c.id} className={c.right ? 'r' : ''} aria-sort={ariaSort(sort, c.id)} {...headDnD(c.id, i, onMove)}><SortHead id={c.id} label={c.label} sort={sort} onSort={onSort} /></th>
+            <th key={c.id} className={c.right ? 'r' : ''} aria-sort={ariaSort(sort, c.id)} {...headDnD(c.id, i, onMove)}><SortHead id={c.id} label={c.label} sort={sort} onSort={onSort} /><ResizeHandle id={c.id} extra={i === cols.length - 1 ? 40 : 0} onResize={onResize} onReset={onResetWidth} /></th>
           ))}
         </tr>
       </thead>

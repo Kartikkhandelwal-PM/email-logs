@@ -95,7 +95,7 @@ export default function BulkDetail({ requestId }) {
           <main className="panel round">
             <div className="panel-scroll">
             {rows.length ? (
-              <EmailTable emails={rows.slice(page * pageSize, (page + 1) * pageSize)} cols={columns.visible} onOpen={setSelected} selectedId={selected?.email_reference} onMove={columns.move} sort={sort} onSort={(k) => setSort(nextSort(sort, k))} />
+              <EmailTable emails={rows.slice(page * pageSize, (page + 1) * pageSize)} cols={columns.visible} onOpen={setSelected} selectedId={selected?.email_reference} onMove={columns.move} onResize={columns.resize} onResetWidth={columns.resetWidth} sort={sort} onSort={(k) => setSort(nextSort(sort, k))} />
             ) : (
               <div className="empty"><p><b>No recipients found</b></p><p className="muted">Try changing or clearing your filters.</p></div>
             )}

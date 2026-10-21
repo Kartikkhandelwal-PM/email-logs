@@ -86,9 +86,14 @@ export function useColumns(storageKey, all) {
   })
   useEffect(() => { try { localStorage.setItem(storageKey, JSON.stringify(vis)) } catch { /* storage unavailable */ } }, [vis, storageKey])
   useEffect(() => { try { localStorage.setItem(`${storageKey}:order`, JSON.stringify(order)) } catch { /* storage unavailable */ } }, [order, storageKey])
+  // widths the user dragged to, saved per column
+  const [widths, setWidths] = useState(() => { try { return JSON.parse(localStorage.getItem(`${storageKey}:widths`) || '{}') } catch { return {} } })
+  useEffect(() => { try { localStorage.setItem(`${storageKey}:widths`, JSON.stringify(widths)) } catch { /* storage unavailable */ } }, [widths, storageKey])
 
   const byId = Object.fromEntries(all.map((c) => [c.id, c]))
-  const visible = order.map((id) => byId[id]).filter((c) => c && (vis[c.id] || c.locked))
+  const visible = order.map((id) => byId[id]).filter((c) => c && (vis[c.id] || c.locked)).map((c) => (widths[c.id] ? { ...c, w: widths[c.id] } : c))
+  const resize = (id, px) => setWidths((w) => ({ ...w, [id]: Math.round(Math.max(60, Math.min(640, px))) }))
+  const resetWidth = (id) => setWidths((w) => { const n = { ...w }; delete n[id]; return n })
   // The first column (the ID) stays where it is; every other column can be moved
   const move = (fromId, toId) => setOrder((o) => {
     if (fromId === toId || fromId === o[0] || toId === o[0]) return o
@@ -106,8 +111,23 @@ export function useColumns(storageKey, all) {
     next.splice(next.indexOf(o[j]) + (dir > 0 ? 1 : 0), 0, id)
     return next
   })
-  const reset = () => { setVis(defaults); setOrder(defaultOrder) }
-  return { visible, vis, setVis, defaults, order, move, nudge, reset }
+  const reset = () => { setVis(defaults); setOrder(defaultOrder); setWidths({}) }
+  return { visible, vis, setVis, defaults, order, move, nudge, reset, resize, resetWidth }
+}
+
+// Drag handle on the right edge of a column title. Drag to change the width, double-click to go back to the default.
+export function ResizeHandle({ id, extra = 0, onResize, onReset }) {
+  if (!onResize) return null
+  const start = (e) => {
+    e.preventDefault(); e.stopPropagation()
+    const th = e.currentTarget.closest('th')
+    const startX = e.clientX, startW = th.getBoundingClientRect().width - extra
+    const move = (ev) => onResize(id, startW + ev.clientX - startX)
+    const up = () => { window.removeEventListener('mousemove', move); window.removeEventListener('mouseup', up); document.body.classList.remove('resizing') }
+    document.body.classList.add('resizing')
+    window.addEventListener('mousemove', move); window.addEventListener('mouseup', up)
+  }
+  return <span className="rsz" role="separator" aria-orientation="vertical" title="Drag to change the width. Double-click to reset." onMouseDown={start} onClick={(e) => e.stopPropagation()} onDoubleClick={(e) => { e.stopPropagation(); onReset?.(id) }} onDragStart={(e) => e.preventDefault()} />
 }
 
 // Props that make a column header draggable. Dropping it on another header moves it there.
@@ -175,7 +195,7 @@ export function ColumnPicker({ all, vis, setVis, order, nudge, reset }) {
   )
 }
 
-export function EmailTable({ emails, cols, onOpen, sort, onSort, selectedId, onMove }) {
+export function EmailTable({ emails, cols, onOpen, sort, onSort, selectedId, onMove, onResize, onResetWidth }) {
   // Fixed-width columns keep the grid steady; columns without a width (Recipient, Subject, Detail) share what is left
   // the last column gets 40px extra so its title never runs under the fixed + button
   const widthOf = (c, i) => (c.w ? c.w + (i === cols.length - 1 ? 40 : 0) : 0)
@@ -185,7 +205,7 @@ export function EmailTable({ emails, cols, onOpen, sort, onSort, selectedId, onM
     <table className="logs has-corner fixed" style={{ minWidth: fixed + flex * 200 }}>
       <colgroup>{cols.map((c, i) => <col key={c.id} style={c.w ? { width: widthOf(c, i) } : undefined} />)}</colgroup>
       <thead>
-        <tr>{cols.map((c, i) => <th key={c.id} aria-sort={ariaSort(sort, c.id)} {...headDnD(c.id, i, onMove)}><SortHead id={c.id} label={c.label} sort={sort} onSort={onSort} /></th>)}</tr>
+        <tr>{cols.map((c, i) => <th key={c.id} aria-sort={ariaSort(sort, c.id)} {...headDnD(c.id, i, onMove)}><SortHead id={c.id} label={c.label} sort={sort} onSort={onSort} /><ResizeHandle id={c.id} extra={i === cols.length - 1 ? 40 : 0} onResize={onResize} onReset={onResetWidth} /></th>)}</tr>
       </thead>
       <tbody>
         {emails.map((e) => (
