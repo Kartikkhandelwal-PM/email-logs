@@ -72,7 +72,7 @@ export function Pager({ page, total, pageSize, onPage, onSize, sizes, info }) {
 }
 
 export function toCsv(emails) {
-  const cols = ['log_id', 'bulk_id', 'module', 'triggered_time', 'sent_time', 'delivered_time', 'attachment_count', 'cc', 'bcc', 'opened_time', 'sent_by', 'to', 'from', 'subject', 'status', 'status_detail', 'type', 'mode']
+  const cols = ['log_id', 'bulk_id', 'trigger_event', 'module', 'triggered_time', 'sent_time', 'delivered_time', 'attachment_count', 'cc', 'bcc', 'opened_time', 'sent_by', 'to', 'from', 'subject', 'status', 'status_detail', 'type', 'mode']
   const esc = (v) => `"${String(Array.isArray(v) ? v.join('; ') : v ?? '').replace(/"/g, '""')}"`
   return [cols.join(','), ...emails.map((e) => cols.map((c) => esc(e[c])).join(','))].join('\n')
 }
@@ -111,13 +111,15 @@ export function Popover({ button, children, width = 240, onOpen, up = false }) {
     const out = (e) => { if (!ref.current?.contains(e.target)) setPos(null) }
     const esc = (e) => e.key === 'Escape' && setPos(null)
     const close = () => setPos(null)
+    // scrolling the page closes the popover, but scrolling inside it (a long list) must not
+    const onScroll = (e) => { if (!ref.current?.contains(e.target)) setPos(null) }
     document.addEventListener('mousedown', out)
     window.addEventListener('keydown', esc)
-    window.addEventListener('scroll', close, true)
+    window.addEventListener('scroll', onScroll, true)
     window.addEventListener('resize', close)
     return () => {
       document.removeEventListener('mousedown', out); window.removeEventListener('keydown', esc)
-      window.removeEventListener('scroll', close, true); window.removeEventListener('resize', close)
+      window.removeEventListener('scroll', onScroll, true); window.removeEventListener('resize', close)
     }
   }, [pos])
   const toggle = (e) => {

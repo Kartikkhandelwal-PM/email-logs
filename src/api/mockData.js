@@ -93,9 +93,10 @@ for (const mod of Object.keys(CAMPAIGNS)) {
 }
 const STAFF = ['Kartik K.', 'Anita Shah', 'Rohit Mehta', 'Priyanka D.', 'System']
 const SINGLE_SUBJECTS = [
-  ['Your Form 16 is attached', 'manual', 'TDS'], ['GSTR-3B filed: acknowledgement', 'automated', 'GST'],
-  ['ITR-V acknowledgement attached', 'automated', 'ITR'], ['Query on your TDS challan', 'manual', 'TDS'],
-  ['Reply to GST notice: documents needed', 'manual', 'GST'], ['Your Form 26AS summary', 'automated', 'ITR'],
+  ['Your Form 16 is attached', 'manual', 'TDS', 'Form 16 shared'], ['GSTR-3B filed: acknowledgement', 'automated', 'GST', 'GSTR-3B filed'],
+  ['ITR-V acknowledgement attached', 'automated', 'ITR', 'ITR-V acknowledgement received'], ['Query on your TDS challan', 'manual', 'TDS', 'Client query'],
+  ['Reply to GST notice: documents needed', 'manual', 'GST', 'GST notice reply'], ['Your Form 26AS summary', 'automated', 'ITR', 'Form 26AS / AIS available'],
+  ['Your tax computation is ready', 'manual', 'ITR', 'Tax computation shared'], ['Payment received: thank you', 'automated', '', 'Payment received'],
 ]
 
 function pickStatus(isOld) {
@@ -180,12 +181,12 @@ function generate() {
     }
   }
   for (let s = 0; s < 700; s++) {
-    const [baseSubject, mode, singleModule] = pick(SINGLE_SUBJECTS)
+    const [baseSubject, mode, singleModule, singleEvent] = pick(SINGLE_SUBJECTS)
     const subject = /Form|ITR|TDS|26AS/.test(baseSubject) ? `${baseSubject} \u2013 PAN ${fakePan()}` : /GST/.test(baseSubject) ? `${baseSubject} \u2013 GSTIN ${fakeGstin()}` : `${baseSubject} (Ref ${Math.floor(rand() * 9000 + 1000)})`
     const requestId = `req-${(reqNo++).toString(16)}${Math.floor(rand() * 1e4)}`
     const sentAt = new Date(now - rand() * 59 * 864e5)
     out.push(makeEmail({
-      idx: 0, requestId, sentAt, module: s % 9 === 0 ? '' : singleModule, triggeredAt: new Date(sentAt.getTime() - (2 + (s % 5)) * 1000),
+      idx: 0, requestId, sentAt, module: singleModule, triggerEvent: singleEvent, triggeredAt: new Date(sentAt.getTime() - (2 + (s % 5)) * 1000),
       subject, from: mode === 'automated' ? 'noreply@kdkclient.com' : 'team@kdkclient.com',
       type: 'single', mode, campaign: '', agent,
       attachments: rand() < 0.6 ? 0 : 1 + Math.floor(rand() * 3), sentBy: mode === 'automated' ? 'System' : pick(STAFF.slice(0, 4)),

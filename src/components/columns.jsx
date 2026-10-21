@@ -22,6 +22,7 @@ export const SORT_VALUES = {
   to: (e) => e.to,
   from: (e) => e.from,
   subject: (e) => e.subject,
+  event: (e) => e.trigger_event,
   module: (e) => e.module,
   triggered: (e) => e.triggered_time,
   mode: (e) => e.mode,
@@ -38,15 +39,16 @@ export const SORT_VALUES = {
 // Column definitions for the per-email tables. `on` = visible by default.
 export const EMAIL_COLUMNS = [
   { id: 'logid', label: 'ID', on: true, w: 108, locked: true, nowrap: true, idcol: true, render: (e) => e.log_id },
-    { id: 'to', label: 'Recipient', on: true, locked: true, render: (e) => <span className="title" title={`${e.to} (from ${e.from})`}>{e.to}</span> },
+    { id: 'to', label: 'Recipient', on: true, locked: true, w: 200, render: (e) => <span className="title" title={`${e.to} (from ${e.from})`}>{e.to}</span> },
   { id: 'from', label: 'From', on: false, w: 220, render: (e) => e.from },
   { id: 'subject', label: 'Subject', on: true, render: (e) => <span className="trunc" title={e.subject}>{e.subject}</span> },
+  { id: 'event', label: 'Trigger event', on: true, w: 176, render: (e) => <span className="trunc" title={e.trigger_event}>{e.trigger_event || '\u2014'}</span> },
   { id: 'module', label: 'Module', on: true, w: 84, render: (e) => <ModuleTag module={e.module} /> },
   { id: 'mode', label: 'Mode', on: false, w: 108, render: (e) => <ModeTag mode={e.mode} /> },
   { id: 'status', label: 'Status', on: true, w: 146, render: (e) => <StatusBadge status={e.status} /> },
   { id: 'triggered', label: 'Triggered at', on: false, w: 170, nowrap: true, render: (e) => fmtFull(e.triggered_time) },
-  { id: 'sent', label: 'Sent at', on: true, w: 180, nowrap: true, render: (e) => fmtFull(e.sent_time) },
-  { id: 'delivered', label: 'Delivered at', on: true, w: 180, nowrap: true, render: (e) => fmtFull(e.delivered_time) },
+  { id: 'sent', label: 'Sent at', on: true, w: 164, nowrap: true, render: (e) => fmtFull(e.sent_time) },
+  { id: 'delivered', label: 'Delivered at', on: true, w: 164, nowrap: true, render: (e) => fmtFull(e.delivered_time) },
   { id: 'attach', label: 'Attachments', on: true, w: 122, render: (e) => <AttachCell n={e.attachment_count} /> },
   { id: 'cc', label: 'CC / BCC', on: false, w: 200, render: (e) => <CcCell e={e} /> },
   { id: 'opened', label: 'Opened at', on: false, w: 180, nowrap: true, render: (e) => fmtFull(e.opened_time) },
@@ -56,7 +58,7 @@ export const EMAIL_COLUMNS = [
 
 // Columns for the recipients of one bulk send (every email has its own subject and attachment count)
 export const RECIPIENT_COLUMNS = EMAIL_COLUMNS
-  .filter((c) => !['mode', 'by'].includes(c.id))
+  .filter((c) => !['mode', 'by', 'event'].includes(c.id)) // the trigger event is the same for the whole bulk send
   .map((c) => {
     if (c.id === 'to') return { ...c, w: 200, render: (e) => <span className="title">{e.to}</span> }
     // every row of one bulk send is from the same period, so the year is left out
@@ -150,11 +152,13 @@ export function ColumnPicker({ all, vis, setVis, order, nudge, reset }) {
     if (!pos) return
     const close = (e) => { if (!(e.type === 'mousedown' && ref.current?.contains(e.target))) setPos(null) }
     const esc = (e) => e.key === 'Escape' && setPos(null)
+    // scrolling the table closes the menu, but scrolling inside the menu itself must not
+    const onScroll = (e) => { if (!ref.current?.contains(e.target)) setPos(null) }
     document.addEventListener('mousedown', close)
     window.addEventListener('keydown', esc)
-    window.addEventListener('scroll', close, true)
+    window.addEventListener('scroll', onScroll, true)
     window.addEventListener('resize', close)
-    return () => { document.removeEventListener('mousedown', close); window.removeEventListener('keydown', esc); window.removeEventListener('scroll', close, true); window.removeEventListener('resize', close) }
+    return () => { document.removeEventListener('mousedown', close); window.removeEventListener('keydown', esc); window.removeEventListener('scroll', onScroll, true); window.removeEventListener('resize', close) }
   }, [pos])
   const toggle = (e) => {
     e.stopPropagation()

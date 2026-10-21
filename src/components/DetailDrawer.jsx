@@ -92,7 +92,7 @@ export default function DetailDrawer({ email, list = [], onSelect, onClose, bulk
               <div className="f full"><span className="k">To</span><span className="v"><span className="addr">{email.to}</span><CopyButton text={email.to} /></span></div>
               {email.cc.length > 0 && <div className="f full"><span className="k">CC</span><span className="v">{addrs(email.cc)}</span></div>}
               {email.bcc.length > 0 && <div className="f full"><span className="k">BCC</span><span className="v">{addrs(email.bcc)}</span></div>}
-              {email.type === 'bulk' && email.trigger_event && <div className="f full"><span className="k">Trigger event</span><span className="v">{email.trigger_event}</span></div>}
+              {email.trigger_event && <div className="f full"><span className="k">Trigger event</span><span className="v">{email.trigger_event}</span></div>}
               <div className="f"><span className="k">From</span><span className="v">{email.from}</span></div>
               <div className="f"><span className="k">Sent by</span><span className="v"><SentBy name={email.sent_by} /></span></div>
               <div className="f"><span className="k">Mode</span><span className="v"><ModeTag mode={email.mode} /></span></div>
