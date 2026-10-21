@@ -107,11 +107,12 @@ export function groupByRequest(emails) {
   for (const e of emails) {
     let g = map.get(e.request_id)
     if (!g) {
-      g = { request_id: e.request_id, bulk_id: e.bulk_id, module: e.module, triggered_time: e.triggered_time, type: e.type, mode: e.mode, subject: e.subject, from: e.from,
-        campaign: e.campaign, sent_time: e.sent_time, sent_by: e.sent_by, attachment_count: e.attachment_count, emails: [], counts: {} }
+      g = { request_id: e.request_id, bulk_id: e.bulk_id, trigger_event: e.trigger_event, module: e.module, triggered_time: e.triggered_time, type: e.type, mode: e.mode, subject: e.subject, from: e.from,
+        campaign: e.campaign, sent_time: e.sent_time, sent_by: e.sent_by, attachment_count: 0, emails: [], counts: {} }
       map.set(e.request_id, g)
     }
     g.emails.push(e)
+    g.attachment_count += e.attachment_count // total across the whole bulk send
     g.counts[e.status] = (g.counts[e.status] || 0) + 1
     if (e.sent_time < g.sent_time) g.sent_time = e.sent_time
   }

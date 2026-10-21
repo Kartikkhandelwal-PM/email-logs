@@ -36,16 +36,16 @@ const DIAGNOSTICS = {
 const MODULES = ['GST', 'TDS', 'ITR']
 
 const CAMPAIGNS = [
-  { subject: 'Invoice #{n} is ready', mode: 'automated', from: 'billing@kdkclient.com' },
-  { subject: 'Payment reminder: due this week', mode: 'automated', from: 'billing@kdkclient.com' },
-  { subject: 'Your monthly statement', mode: 'automated', from: 'accounts@kdkclient.com' },
-  { subject: 'Year-end tax documents', mode: 'manual', from: 'tax@kdkclient.com' },
-  { subject: 'We have moved offices', mode: 'manual', from: 'hello@kdkclient.com' },
-  { subject: 'Compliance deadline notice', mode: 'manual', from: 'compliance@kdkclient.com' },
-  { subject: 'GST return filing reminder', mode: 'automated', from: 'compliance@kdkclient.com' },
-  { subject: 'Advance tax due date', mode: 'manual', from: 'tax@kdkclient.com' },
-  { subject: 'Updated fee schedule', mode: 'manual', from: 'hello@kdkclient.com' },
-  { subject: 'Documents pending from you', mode: 'automated', from: 'accounts@kdkclient.com' },
+  { event: 'Invoice generated', subject: 'Invoice {n} is ready', mode: 'automated', from: 'billing@kdkclient.com' },
+  { event: 'Payment due reminder', subject: 'Payment reminder: due this week', mode: 'automated', from: 'billing@kdkclient.com' },
+  { event: 'Monthly statement run', subject: 'Your monthly statement', mode: 'automated', from: 'accounts@kdkclient.com' },
+  { event: 'Manual send', subject: 'Year-end tax documents', mode: 'manual', from: 'tax@kdkclient.com' },
+  { event: 'Manual send', subject: 'We have moved offices', mode: 'manual', from: 'hello@kdkclient.com' },
+  { event: 'Manual send', subject: 'Compliance deadline notice', mode: 'manual', from: 'compliance@kdkclient.com' },
+  { event: 'GST filing reminder', subject: 'GST return filing reminder', mode: 'automated', from: 'compliance@kdkclient.com' },
+  { event: 'Manual send', subject: 'Advance tax due date', mode: 'manual', from: 'tax@kdkclient.com' },
+  { event: 'Manual send', subject: 'Updated fee schedule', mode: 'manual', from: 'hello@kdkclient.com' },
+  { event: 'Pending documents reminder', subject: 'Documents pending from you', mode: 'automated', from: 'accounts@kdkclient.com' },
 ]
 const STAFF = ['Kartik K.', 'Anita Shah', 'Rohit Mehta', 'Priyanka D.', 'System']
 const SINGLE_SUBJECTS = [
@@ -72,7 +72,7 @@ function buildEvents(status, sentAt) {
   return ev
 }
 
-function makeEmail({ idx, requestId, sentAt, subject, from, type, mode, campaign, agent, attachments, sentBy, module, triggeredAt }) {
+function makeEmail({ idx, requestId, sentAt, subject, from, type, mode, campaign, agent, attachments, sentBy, module, triggeredAt, triggerEvent }) {
   const name = pick(FIRST)
   const to = `${name.toLowerCase()}${Math.floor(rand() * 900 + 100)}@${pick(DOMAINS)}`
   const ageDays = (Date.now() - sentAt.getTime()) / 864e5
@@ -89,6 +89,7 @@ function makeEmail({ idx, requestId, sentAt, subject, from, type, mode, campaign
     email_reference: `ref-${requestId.slice(4)}-${String(idx).padStart(4, '0')}`,
     sent_time: sentAt.toISOString(),
     triggered_time: triggeredAt.toISOString(),
+    trigger_event: triggerEvent || '',
     module,
     subject, from, to,
     request_id: requestId,
@@ -123,10 +124,13 @@ function generate() {
     const sentBy = tpl.mode === 'automated' ? 'System' : pick(STAFF.slice(0, 4))
     const size = c === 1 ? 3200 : c === 4 ? 1450 : c === 9 ? 820 : c === 20 ? 2100 : 25 + Math.floor(rand() * 180)
     for (let i = 0; i < size; i++) {
+      const person = pick(FIRST)
+      // each email in a bulk send has its own subject and its own attachment count
+      const subj = tpl.subject.includes('{n}') ? tpl.subject.replace('{n}', `INV-${20000 + c * 500 + i}`) : `${tpl.subject} \u2013 ${person}`
       out.push(makeEmail({
         idx: i, requestId, sentAt: new Date(sentAt.getTime() + i * 700), module: MODULES[c % 3], triggeredAt: new Date(sentAt.getTime() - (30 + ((c * 7) % 50)) * 1000),
-        subject: tpl.subject.replace('{n}', 2000 + c), from: tpl.from,
-        type: 'bulk', mode: tpl.mode, attachments, sentBy, campaign: tpl.subject.replace('#{n}', ''), agent,
+        subject: subj, from: tpl.from, triggerEvent: tpl.event,
+        type: 'bulk', mode: tpl.mode, attachments: attachments === 0 && rand() < .7 ? 0 : Math.floor(rand() * 4), sentBy, campaign: tpl.subject.replace('#{n}', ''), agent,
       }))
     }
   }

@@ -581,3 +581,5 @@ th.drop { box-shadow: inset 3px 0 0 var(--accent); background: var(--accent-soft
 .scard.tone-amber { background: var(--paper); --w: 246, 160, 20; --wa: .20; }
 .scard.tone-red   { background: var(--paper); --w: 226, 72, 61;  --wa: .15; }
 .scard .sn { font-size: 28px; }
+
+td .trunc { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

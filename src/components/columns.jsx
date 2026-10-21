@@ -40,7 +40,7 @@ export const EMAIL_COLUMNS = [
   { id: 'logid', label: 'ID', on: true, w: 108, locked: true, nowrap: true, idcol: true, render: (e) => e.log_id },
     { id: 'to', label: 'Recipient', on: true, locked: true, render: (e) => <span className="title" title={`${e.to} (from ${e.from})`}>{e.to}</span> },
   { id: 'from', label: 'From', on: false, w: 220, render: (e) => e.from },
-  { id: 'subject', label: 'Subject', on: true, render: (e) => e.subject },
+  { id: 'subject', label: 'Subject', on: true, render: (e) => <span className="trunc" title={e.subject}>{e.subject}</span> },
   { id: 'module', label: 'Module', on: true, w: 84, render: (e) => <ModuleTag module={e.module} /> },
   { id: 'mode', label: 'Mode', on: false, w: 108, render: (e) => <ModeTag mode={e.mode} /> },
   { id: 'status', label: 'Status', on: true, w: 146, render: (e) => <StatusBadge status={e.status} /> },
@@ -54,18 +54,19 @@ export const EMAIL_COLUMNS = [
   { id: 'detail', label: 'Detail', on: false, w: 160, render: (e) => (['soft_bounce', 'hard_bounce', 'failed'].includes(e.status) ? e.status_detail : '—') },
 ]
 
-// Columns for the recipients of one bulk send (subject/mode are the same for all)
+// Columns for the recipients of one bulk send (every email has its own subject and attachment count)
 export const RECIPIENT_COLUMNS = EMAIL_COLUMNS
-  .filter((c) => !['subject', 'mode', 'by'].includes(c.id))
+  .filter((c) => !['mode', 'by'].includes(c.id))
   .map((c) => {
-    if (c.id === 'to') return { ...c, render: (e) => <span className="title">{e.to}</span> }
+    if (c.id === 'to') return { ...c, w: 200, render: (e) => <span className="title">{e.to}</span> }
     // every row of one bulk send is from the same period, so the year is left out
     if (c.id === 'sent') return { ...c, on: false, w: 140, render: (e) => fmtShortSec(e.sent_time) } // already in the page header
-    if (c.id === 'delivered') return { ...c, w: 140, render: (e) => fmtShortSec(e.delivered_time) }
-    if (c.id === 'opened') return { ...c, on: true, w: 140, render: (e) => fmtShortSec(e.opened_time) }
-    if (c.id === 'cc') return { ...c, on: true, w: 170 }
+    if (c.id === 'delivered') return { ...c, w: 132, render: (e) => fmtShortSec(e.delivered_time) }
+    if (c.id === 'opened') return { ...c, on: true, w: 132, render: (e) => fmtShortSec(e.opened_time) }
+    if (c.id === 'cc') return { ...c, on: true, w: 150 }
     if (['module', 'triggered'].includes(c.id)) return { ...c, on: false } // same for every recipient; shown in the page header
-    if (['detail', 'attach'].includes(c.id)) return { ...c, on: true }
+    if (c.id === 'detail') return { ...c, on: true, w: 156 }
+    if (c.id === 'attach') return { ...c, on: true }
     return c
   })
 
@@ -181,7 +182,7 @@ export function EmailTable({ emails, cols, onOpen, sort, onSort, selectedId, onM
   const fixed = cols.reduce((n, c, i) => n + widthOf(c, i), 0)
   const flex = cols.filter((c) => !c.w).length
   return (
-    <table className="logs has-corner fixed" style={{ minWidth: fixed + flex * 170 }}>
+    <table className="logs has-corner fixed" style={{ minWidth: fixed + flex * 200 }}>
       <colgroup>{cols.map((c, i) => <col key={c.id} style={c.w ? { width: widthOf(c, i) } : undefined} />)}</colgroup>
       <thead>
         <tr>{cols.map((c, i) => <th key={c.id} aria-sort={ariaSort(sort, c.id)} {...headDnD(c.id, i, onMove)}><SortHead id={c.id} label={c.label} sort={sort} onSort={onSort} /></th>)}</tr>

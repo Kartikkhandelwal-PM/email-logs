@@ -44,7 +44,7 @@ function Home() {
   const [reload, setReload] = useState(0)
   const [selected, setSelected] = useState(null)
   const columns = useColumns('email-logs:single-cols:v8', EMAIL_COLUMNS)
-  const bulkCols = useColumns('email-logs:bulk-cols:v1', BULK_COLUMNS)
+  const bulkCols = useColumns('email-logs:bulk-cols:v2', BULK_COLUMNS)
 
   useEffect(() => {
     let live = true

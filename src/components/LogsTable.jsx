@@ -8,12 +8,12 @@ const bounced = (g) => (g.counts.soft_bounce || 0) + (g.counts.hard_bounce || 0)
 // Columns of the bulk sends list. `on` = shown by default, `w` = width in px (no w = takes the leftover space).
 export const BULK_COLUMNS = [
   { id: 'id', label: 'ID', on: true, locked: true, w: 78, td: 'idcell nowrap', render: (g) => g.bulk_id },
-  { id: 'subject', label: 'Subject', on: true, locked: true,
-    render: (g) => <a className="title clamp2" href={`#/bulk/${g.request_id}`} title={`${g.subject} (from ${g.from})`} onClick={(e) => e.stopPropagation()}>{g.subject}</a> },
+  { id: 'event', label: 'Trigger event', on: true, locked: true,
+    render: (g) => <a className="title clamp2" href={`#/bulk/${g.request_id}`} title={`${g.trigger_event} (from ${g.from})`} onClick={(e) => e.stopPropagation()}>{g.trigger_event}</a> },
   { id: 'module', label: 'Module', on: true, w: 80, render: (g) => <ModuleTag module={g.module} /> },
   { id: 'mode', label: 'Mode', on: false, w: 104, render: (g) => <ModeTag mode={g.mode} /> },
   { id: 'recipients', label: 'Recipients', on: true, w: 100, right: true, td: 'num', render: (g) => g.emails.length.toLocaleString() },
-  { id: 'attach', label: 'Attachments', on: true, w: 116, render: (g) => <AttachCell n={g.attachment_count} /> },
+  { id: 'attach', label: 'Total attachments', on: true, w: 162, render: (g) => <AttachCell n={g.attachment_count} /> },
   { id: 'by', label: 'Sent by', on: true, w: 150, td: 'nowrap', render: (g) => <SentBy name={g.sent_by} /> },
   { id: 'triggered', label: 'Triggered at', on: false, w: 168, td: 'muted-cell nowrap', render: (g) => fmtNoSec(g.triggered_time) },
   { id: 'sent', label: 'Sent at', on: true, w: 160, td: 'muted-cell nowrap', render: (g) => fmtNoSec(g.sent_time) },
@@ -28,7 +28,7 @@ export const BULK_COLUMNS = [
 // What each column sorts by
 export const BULK_SORT = {
   id: (g) => g.bulk_id,
-  subject: (g) => g.subject,
+  event: (g) => g.trigger_event,
   module: (g) => g.module,
   mode: (g) => g.mode,
   recipients: (g) => g.emails.length,
