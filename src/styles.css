@@ -583,3 +583,8 @@ th.drop { box-shadow: inset 3px 0 0 var(--accent); background: var(--accent-soft
 .scard .sn { font-size: 28px; }
 
 td .trunc { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* full-text hover tip for cut-off cells */
+.celltip { position: fixed; z-index: 60; max-width: 420px; padding: 7px 10px; border-radius: 6px; background: #292a2e; color: #fff; font-size: 12.5px; line-height: 1.4; box-shadow: var(--shadow-3); pointer-events: none; opacity: 0; transition: opacity .1s; overflow-wrap: anywhere; }
+.celltip.show { opacity: 1; }
+@media (prefers-color-scheme: dark) { .celltip { background: #e6e9ee; color: #1b1c1e; } }
