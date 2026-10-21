@@ -602,5 +602,9 @@ table.logs th:first-child { position: sticky; left: 0; top: 0; z-index: 5; }
 table.logs td:first-child { position: sticky; left: 0; z-index: 2; background: var(--paper); }
 table.logs tr.click:hover > td:first-child { background: color-mix(in srgb, var(--accent-soft) 55%, var(--paper)); }
 table.logs tr.click.is-selected > td:first-child, table.logs tr.click.is-selected:hover > td:first-child { background: var(--accent-soft); }
-/* when scrolled sideways, the frozen column gets a clearer edge */
-.panel-scroll.hscrolled table.logs td:first-child, .panel-scroll.hscrolled table.logs th:first-child { border-right: 2px solid var(--rule-strong); }
+/* when scrolled sideways the frozen column's edge gets darker. Only the colour changes, never the width,
+   so nothing shifts while scrolling. */
+.panel-scroll.hscrolled table.logs td:first-child, .panel-scroll.hscrolled table.logs th:first-child { border-right-color: var(--ink-4); }
+/* no rubber-band bounce or scroll-chaining out of the table, and no scrollbar popping in and out */
+.panel-scroll { overscroll-behavior: contain; scrollbar-gutter: stable; }
+.drawer { overscroll-behavior: contain; }
