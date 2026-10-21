@@ -43,7 +43,7 @@ function Home() {
   const [state, setState] = useState({ loading: true, error: '', emails: [], updatedAt: null })
   const [reload, setReload] = useState(0)
   const [selected, setSelected] = useState(null)
-  const columns = useColumns('email-logs:single-cols:v10', EMAIL_COLUMNS)
+  const columns = useColumns('email-logs:single-cols:v11', EMAIL_COLUMNS)
   const bulkCols = useColumns('email-logs:bulk-cols:v2', BULK_COLUMNS)
 
   useEffect(() => {

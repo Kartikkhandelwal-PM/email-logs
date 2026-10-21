@@ -42,14 +42,14 @@ export const EMAIL_COLUMNS = [
     { id: 'to', label: 'Recipient', on: true, locked: true, w: 200, render: (e) => <span className="title" title={`${e.to} (from ${e.from})`}>{e.to}</span> },
   { id: 'from', label: 'From', on: false, w: 220, render: (e) => e.from },
   { id: 'subject', label: 'Subject', on: true, render: (e) => <span className="trunc" title={e.subject}>{e.subject}</span> },
-  { id: 'event', label: 'Trigger event', on: true, w: 176, render: (e) => <span className="trunc" title={e.trigger_event}>{e.trigger_event || '\u2014'}</span> },
-  { id: 'module', label: 'Module', on: true, w: 84, render: (e) => <ModuleTag module={e.module} /> },
+  { id: 'event', label: 'Trigger event', on: true, w: 164, render: (e) => <span className="trunc" title={e.trigger_event}>{e.trigger_event || '\u2014'}</span> },
+  { id: 'module', label: 'Module', on: true, w: 80, render: (e) => <ModuleTag module={e.module} /> },
   { id: 'mode', label: 'Mode', on: false, w: 108, render: (e) => <ModeTag mode={e.mode} /> },
-  { id: 'status', label: 'Status', on: true, w: 146, render: (e) => <StatusBadge status={e.status} /> },
+  { id: 'status', label: 'Status', on: true, w: 140, render: (e) => <StatusBadge status={e.status} /> },
   { id: 'triggered', label: 'Triggered at', on: false, w: 170, nowrap: true, render: (e) => fmtFull(e.triggered_time) },
-  { id: 'sent', label: 'Sent at', on: true, w: 164, nowrap: true, render: (e) => fmtFull(e.sent_time) },
-  { id: 'delivered', label: 'Delivered at', on: true, w: 164, nowrap: true, render: (e) => fmtFull(e.delivered_time) },
-  { id: 'attach', label: 'Attachments', on: true, w: 122, render: (e) => <AttachCell n={e.attachment_count} /> },
+  { id: 'sent', label: 'Sent at', on: true, w: 172, nowrap: true, render: (e) => fmtFull(e.sent_time) },
+  { id: 'delivered', label: 'Delivered at', on: true, w: 172, nowrap: true, render: (e) => fmtFull(e.delivered_time) },
+  { id: 'attach', label: 'Attachments', on: true, w: 126, render: (e) => <AttachCell n={e.attachment_count} /> },
   { id: 'cc', label: 'CC / BCC', on: false, w: 200, render: (e) => <CcCell e={e} /> },
   { id: 'opened', label: 'Opened at', on: false, w: 180, nowrap: true, render: (e) => fmtFull(e.opened_time) },
   { id: 'by', label: 'Sent by', on: false, w: 150, nowrap: true, render: (e) => <SentBy name={e.sent_by} /> },
@@ -206,7 +206,7 @@ export function EmailTable({ emails, cols, onOpen, sort, onSort, selectedId, onM
   const fixed = cols.reduce((n, c, i) => n + widthOf(c, i), 0)
   const flex = cols.filter((c) => !c.w).length
   return (
-    <table className="logs has-corner fixed" style={{ minWidth: fixed + flex * 200 }}>
+    <table className="logs has-corner fixed" style={{ minWidth: fixed + flex * 150 }}>
       <colgroup>{cols.map((c, i) => <col key={c.id} style={c.w ? { width: widthOf(c, i) } : undefined} />)}</colgroup>
       <thead>
         <tr>{cols.map((c, i) => <th key={c.id} aria-sort={ariaSort(sort, c.id)} {...headDnD(c.id, i, onMove)}><SortHead id={c.id} label={c.label} sort={sort} onSort={onSort} /><ResizeHandle id={c.id} extra={i === cols.length - 1 ? 40 : 0} onResize={onResize} onReset={onResetWidth} /></th>)}</tr>

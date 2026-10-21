@@ -13,7 +13,7 @@ export default function BulkDetail({ requestId }) {
   const [pageSize, setPageSize] = useState(50)
   const [selected, setSelected] = useState(null)
   const [sort, setSort] = useState(null) // null = send order (BL-148-1 first)
-  const columns = useColumns('email-logs:recipient-cols:v12', RECIPIENT_COLUMNS)
+  const columns = useColumns('email-logs:recipient-cols:v13', RECIPIENT_COLUMNS)
 
   useEffect(() => {
     let live = true
