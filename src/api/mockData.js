@@ -53,8 +53,36 @@ const CAMPAIGNS = {
     { event: 'ITR-V acknowledgement received', subject: 'ITR-V acknowledgement for AY 2026-27', mode: 'automated', from: 'itr@kdkclient.com' },
     { event: 'Documents pending for ITR', subject: 'Documents pending for your ITR filing', mode: 'automated', from: 'itr@kdkclient.com' },
     { event: 'Advance tax due date', subject: 'Advance tax instalment is due on 15 Dec', mode: 'manual', from: 'itr@kdkclient.com' },
+    { event: 'Tax computation shared', subject: 'Your tax computation for AY 2026-27', mode: 'manual', from: 'itr@kdkclient.com' },
     { event: 'Form 26AS / AIS available', subject: 'Your Form 26AS and AIS are ready to review', mode: 'manual', from: 'itr@kdkclient.com' },
   ],
+}
+
+// Reminder notifications from the Compliance Tracker: one bulk send per step of the reminder plan.
+const REMINDER_STEPS = [
+  { step: 'First reminder', mode: 'automated', subject: 'Reminder: {form} for {period} (due {due})' },
+  { step: 'Follow-up', mode: 'automated', subject: 'Follow-up: {form} for {period} (due {due})' },
+  { step: 'Due today', mode: 'automated', subject: 'Due today: {form} for {period}' },
+  { step: 'Missed', mode: 'automated', subject: 'Overdue: {form} for {period}' },
+  { step: 'Escalation', mode: 'automated', subject: 'Overdue: {form} for {period} (second notice)' },
+  { step: 'Final notice', mode: 'automated', subject: 'Overdue: {form} for {period} (final notice)' },
+  { step: 'Manual chase', mode: 'manual', subject: 'Overdue: {form} for {period}' },
+  { step: 'Task completed', mode: 'automated', subject: 'Completed: {form} for {period}' },
+]
+const REMINDER_FORMS = {
+  GST: [{ form: 'GSTR-3B', period: 'Sep 2026', due: '20 Oct' }, { form: 'GSTR-1', period: 'Sep 2026', due: '11 Oct' }],
+  TDS: [{ form: 'TDS return 26Q', period: 'Q2 FY 2026-27', due: '31 Oct' }, { form: 'TDS payment', period: 'Sep 2026', due: '7 Oct' }],
+  ITR: [{ form: 'ITR', period: 'AY 2026-27', due: '31 Jul' }, { form: 'Advance tax', period: 'Q3 FY 2026-27', due: '15 Dec' }],
+}
+for (const mod of Object.keys(CAMPAIGNS)) {
+  const base = CAMPAIGNS[mod]
+  const reminders = REMINDER_STEPS.flatMap((s, i) => {
+    const f = REMINDER_FORMS[mod][i % REMINDER_FORMS[mod].length]
+    const fill = (t) => t.replace('{form}', f.form).replace('{period}', f.period).replace('{due}', f.due)
+    return [{ event: `${s.step}: ${f.form}`, subject: fill(s.subject), mode: s.mode, from: base[0].from }]
+  })
+  // interleave so the list reads as a mix of notices and reminders
+  CAMPAIGNS[mod] = Array.from({ length: Math.max(base.length, reminders.length) * 2 }, (_, i) => (i % 2 ? reminders : base)[Math.floor(i / 2) % (i % 2 ? reminders : base).length])
 }
 const STAFF = ['Kartik K.', 'Anita Shah', 'Rohit Mehta', 'Priyanka D.', 'System']
 const SINGLE_SUBJECTS = [
