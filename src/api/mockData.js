@@ -1,0 +1,162 @@
+// Sample data shaped like ZeptoMail's "Get All Email Logs" response,
+// plus a few UI-only fields (type, mode, campaign) the backend will add later.
+
+let seed = 42
+const rand = () => {
+  seed = (seed * 1664525 + 1013904223) % 4294967296
+  return seed / 4294967296
+}
+const pick = (arr) => arr[Math.floor(rand() * arr.length)]
+
+const FIRST = ['Aarav', 'Priya', 'Rohan', 'Sneha', 'Vikram', 'Neha', 'Amit', 'Kavya', 'Rahul', 'Isha', 'Arjun', 'Meera', 'Karan', 'Pooja', 'Sanjay', 'Divya']
+const DOMAINS = ['acme.com', 'globex.in', 'initech.co', 'umbrella.org', 'hooli.io', 'stark.biz', 'wayne.com', 'gmail.com', 'outlook.com']
+// Reason names are ZeptoMail's own bounce errors. Which status each belongs to
+// is a guess here: ZeptoMail's page does not map them.
+const FAILURE_REASONS = {
+  hard_bounce: ['Unknown user', 'Inactive mailbox', 'Invalid DNS records'],
+  soft_bounce: ['Over quota', 'Temporary error', 'Grey listed', 'Host not reachable'],
+  failed: ['Policy rejection', 'Flagged as spam', 'Black listed', 'Too many recipients'],
+}
+
+// Sample server messages, in the style of the diagnostic_message ZeptoMail sends with a bounce
+const DIAGNOSTICS = {
+  'Unknown user': '550 5.1.1 The email account that you tried to reach does not exist.',
+  'Inactive mailbox': '550 5.2.1 The email account that you tried to reach is disabled.',
+  'Invalid DNS records': '550 5.4.4 Unable to resolve the recipient domain.',
+  'Over quota': '552 5.2.2 The email account that you tried to reach is over quota.',
+  'Temporary error': '451 4.3.0 Temporary local problem, please try later.',
+  'Grey listed': '450 4.2.0 Greylisted, please try again in a few minutes.',
+  'Host not reachable': '421 4.4.1 Connection timed out.',
+  'Policy rejection': '554 5.7.1 Message rejected due to local policy.',
+  'Flagged as spam': '550 5.7.1 Message looks like spam.',
+  'Black listed': '554 5.7.1 Service unavailable; client host blocked.',
+  'Too many recipients': '452 4.5.3 Too many recipients.',
+}
+
+const MODULES = ['GST', 'TDS', 'ITR']
+
+const CAMPAIGNS = [
+  { subject: 'Invoice #{n} is ready', mode: 'automated', from: 'billing@kdkclient.com' },
+  { subject: 'Payment reminder: due this week', mode: 'automated', from: 'billing@kdkclient.com' },
+  { subject: 'Your monthly statement', mode: 'automated', from: 'accounts@kdkclient.com' },
+  { subject: 'Year-end tax documents', mode: 'manual', from: 'tax@kdkclient.com' },
+  { subject: 'We have moved offices', mode: 'manual', from: 'hello@kdkclient.com' },
+  { subject: 'Compliance deadline notice', mode: 'manual', from: 'compliance@kdkclient.com' },
+  { subject: 'GST return filing reminder', mode: 'automated', from: 'compliance@kdkclient.com' },
+  { subject: 'Advance tax due date', mode: 'manual', from: 'tax@kdkclient.com' },
+  { subject: 'Updated fee schedule', mode: 'manual', from: 'hello@kdkclient.com' },
+  { subject: 'Documents pending from you', mode: 'automated', from: 'accounts@kdkclient.com' },
+]
+const STAFF = ['Kartik K.', 'Anita Shah', 'Rohit Mehta', 'Priyanka D.', 'System']
+const SINGLE_SUBJECTS = [
+  ['Welcome to our portal', 'automated'], ['Password reset request', 'automated'],
+  ['Your quote is attached', 'manual'], ['Follow-up on our call', 'manual'],
+  ['Document signed successfully', 'automated'], ['Meeting confirmation', 'manual'],
+]
+
+function pickStatus(isOld) {
+  const r = rand()
+  if (r < 0.82) return 'delivered'
+  if (r < 0.88) return 'soft_bounce'
+  if (r < 0.93) return 'hard_bounce'
+  if (r < 0.97) return 'failed'
+  return isOld ? 'delivered' : 'processing'
+}
+
+function buildEvents(status, sentAt) {
+  const t = (s) => new Date(sentAt.getTime() + s * 1000).toISOString()
+  const ev = [{ type: 'processed', label: 'Sent', time: t(0) }]
+  if (status === 'delivered') ev.push({ type: 'delivered', label: 'Delivered', time: t(3 + Math.floor(rand() * 20)) })
+  else if (status === 'processing') { /* still on its way: no further step yet */ }
+  else ev.push({ type: status, label: `${status === 'soft_bounce' ? 'Soft bounce' : status === 'hard_bounce' ? 'Hard bounce' : 'Failed'}: ${pick(FAILURE_REASONS[status])}`, time: t(5 + Math.floor(rand() * 40)) })
+  return ev
+}
+
+function makeEmail({ idx, requestId, sentAt, subject, from, type, mode, campaign, agent, attachments, sentBy, module, triggeredAt }) {
+  const name = pick(FIRST)
+  const to = `${name.toLowerCase()}${Math.floor(rand() * 900 + 100)}@${pick(DOMAINS)}`
+  const ageDays = (Date.now() - sentAt.getTime()) / 864e5
+  const status = pickStatus(ageDays > 1)
+  const events = buildEvents(status, sentAt)
+  const reason = ['soft_bounce', 'hard_bounce', 'failed'].includes(status) ? events[events.length - 1].label.replace(/^[^:]+: /, '') : ''
+  // CC / BCC addresses, as in ZeptoMail's email_info
+  const ccs = (type === 'single' ? rand() < 0.3 : rand() < 0.08) ? Array.from({ length: 1 + Math.floor(rand() * 2) }, () => `${pick(FIRST).toLowerCase()}.cc${Math.floor(rand() * 90 + 10)}@${pick(DOMAINS)}`) : []
+  const bccs = type === 'single' && rand() < 0.15 ? [`archive@${to.split('@')[1]}`] : []
+  const opened = status === 'delivered' && rand() < 0.55 ? new Date(sentAt.getTime() + (60 + Math.floor(rand() * 7200)) * 1000).toISOString() : ''
+  events.unshift({ type: 'triggered', label: 'Triggered', time: triggeredAt.toISOString() })
+  if (opened) events.push({ type: 'opened', label: 'Opened', time: opened })
+  return {
+    email_reference: `ref-${requestId.slice(4)}-${String(idx).padStart(4, '0')}`,
+    sent_time: sentAt.toISOString(),
+    triggered_time: triggeredAt.toISOString(),
+    module,
+    subject, from, to,
+    request_id: requestId,
+    mailagent_key: agent,
+    status,
+    type, mode, campaign,
+    client_reference: type === 'bulk' ? `CAMP-${requestId.slice(-4).toUpperCase()}` : '',
+    delivered_time: events.find((x) => x.type === 'delivered')?.time || '',
+    attachment_count: attachments,
+    cc: ccs,
+    bcc: bccs,
+    processed_time: sentAt.toISOString(),
+    opened_time: opened,
+    diagnostic_message: DIAGNOSTICS[reason] || '',
+    sent_by: sentBy,
+    events,
+    status_detail: reason || events[events.length - 1].label,
+  }
+}
+
+function generate() {
+  const out = []
+  const now = Date.now()
+  let reqNo = 1000
+  const agent = '2d6f.5a1c7b9e0f3d4a8b'
+
+  for (let c = 0; c < 48; c++) {
+    const tpl = CAMPAIGNS[c % CAMPAIGNS.length]
+    const requestId = `req-${(reqNo++).toString(16)}${Math.floor(rand() * 1e4)}`
+    const sentAt = new Date(now - (c * 1.2 + rand()) * 864e5)
+    const attachments = rand() < 0.5 ? 0 : 1 + Math.floor(rand() * 2)
+    const sentBy = tpl.mode === 'automated' ? 'System' : pick(STAFF.slice(0, 4))
+    const size = c === 1 ? 3200 : c === 4 ? 1450 : c === 9 ? 820 : c === 20 ? 2100 : 25 + Math.floor(rand() * 180)
+    for (let i = 0; i < size; i++) {
+      out.push(makeEmail({
+        idx: i, requestId, sentAt: new Date(sentAt.getTime() + i * 700), module: MODULES[c % 3], triggeredAt: new Date(sentAt.getTime() - (30 + ((c * 7) % 50)) * 1000),
+        subject: tpl.subject.replace('{n}', 2000 + c), from: tpl.from,
+        type: 'bulk', mode: tpl.mode, attachments, sentBy, campaign: tpl.subject.replace('#{n}', ''), agent,
+      }))
+    }
+  }
+  for (let s = 0; s < 700; s++) {
+    const [subject, mode] = pick(SINGLE_SUBJECTS)
+    const requestId = `req-${(reqNo++).toString(16)}${Math.floor(rand() * 1e4)}`
+    const sentAt = new Date(now - rand() * 59 * 864e5)
+    out.push(makeEmail({
+      idx: 0, requestId, sentAt, module: s % 7 === 0 ? '' : MODULES[s % 3], triggeredAt: new Date(sentAt.getTime() - (2 + (s % 5)) * 1000),
+      subject, from: mode === 'automated' ? 'noreply@kdkclient.com' : 'team@kdkclient.com',
+      type: 'single', mode, campaign: '', agent,
+      attachments: rand() < 0.6 ? 0 : 1 + Math.floor(rand() * 3), sentBy: mode === 'automated' ? 'System' : pick(STAFF.slice(0, 4)),
+    }))
+  }
+  // Display IDs. KDK creates these; ZeptoMail only knows request_id / email_reference.
+  // Bulk send: BL-101. Its emails: BL-101-1, BL-101-2 ... Single email: EM-1001.
+  const bulkIds = [...new Set(out.filter((e) => e.type === 'bulk').map((e) => e.request_id))] // newest first
+  const bulkNo = Object.fromEntries(bulkIds.map((rid, i) => [rid, 101 + (bulkIds.length - 1 - i)]))
+  const seq = {}
+  for (const e of out) {
+    if (e.type !== 'bulk') continue
+    seq[e.request_id] = (seq[e.request_id] || 0) + 1
+    e.bulk_id = `BL-${bulkNo[e.request_id]}`
+    e.log_id = `${e.bulk_id}-${seq[e.request_id]}`
+  }
+  out.filter((e) => e.type === 'single')
+    .sort((a, b) => new Date(a.sent_time) - new Date(b.sent_time))
+    .forEach((e, i) => { e.log_id = `EM-${1001 + i}`; e.bulk_id = '' })
+
+  return out.sort((a, b) => new Date(b.sent_time) - new Date(a.sent_time))
+}
+
+export const MOCK_LOGS = generate()
