@@ -38,4 +38,7 @@ document.addEventListener('mouseleave', hideTip)
 window.addEventListener('scroll', hideTip, true)
 document.addEventListener('mousedown', hideTip)
 
+// marks a table that has been scrolled sideways, so the frozen ID column can show its edge shadow
+document.addEventListener('scroll', (e) => { if (e.target.classList?.contains('panel-scroll')) e.target.classList.toggle('hscrolled', e.target.scrollLeft > 0) }, true)
+
 createRoot(document.getElementById('root')).render(<App />)

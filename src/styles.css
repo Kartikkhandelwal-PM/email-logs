@@ -596,3 +596,11 @@ th { position: sticky; }
 th:hover .rsz::after, .rsz:hover::after { background: var(--rule-strong); }
 .rsz:hover::after { background: var(--accent); }
 body.resizing, body.resizing * { cursor: col-resize !important; user-select: none !important; }
+
+/* the ID column stays in view when the table scrolls sideways */
+table.logs th:first-child { position: sticky; left: 0; top: 0; z-index: 5; }
+table.logs td:first-child { position: sticky; left: 0; z-index: 2; background: var(--paper); }
+table.logs tr.click:hover > td:first-child { background: color-mix(in srgb, var(--accent-soft) 55%, var(--paper)); }
+table.logs tr.click.is-selected > td:first-child, table.logs tr.click.is-selected:hover > td:first-child { background: var(--accent-soft); }
+table.logs td:first-child::after, table.logs th:first-child::after { content: ''; position: absolute; top: 0; bottom: 0; right: -1px; width: 6px; pointer-events: none; transform: translateX(100%); background: linear-gradient(to right, rgba(0,0,0,.06), transparent); opacity: 0; transition: opacity .15s; }
+.panel-scroll.hscrolled table.logs td:first-child::after, .panel-scroll.hscrolled table.logs th:first-child::after { opacity: 1; }
