@@ -35,23 +35,32 @@ const DIAGNOSTICS = {
 
 const MODULES = ['GST', 'TDS', 'ITR']
 
-const CAMPAIGNS = [
-  { event: 'Invoice generated', subject: 'Invoice {n} is ready', mode: 'automated', from: 'billing@kdkclient.com' },
-  { event: 'Payment due reminder', subject: 'Payment reminder: due this week', mode: 'automated', from: 'billing@kdkclient.com' },
-  { event: 'Monthly statement run', subject: 'Your monthly statement', mode: 'automated', from: 'accounts@kdkclient.com' },
-  { event: 'Manual send', subject: 'Year-end tax documents', mode: 'manual', from: 'tax@kdkclient.com' },
-  { event: 'Manual send', subject: 'We have moved offices', mode: 'manual', from: 'hello@kdkclient.com' },
-  { event: 'Manual send', subject: 'Compliance deadline notice', mode: 'manual', from: 'compliance@kdkclient.com' },
-  { event: 'GST filing reminder', subject: 'GST return filing reminder', mode: 'automated', from: 'compliance@kdkclient.com' },
-  { event: 'Manual send', subject: 'Advance tax due date', mode: 'manual', from: 'tax@kdkclient.com' },
-  { event: 'Manual send', subject: 'Updated fee schedule', mode: 'manual', from: 'hello@kdkclient.com' },
-  { event: 'Pending documents reminder', subject: 'Documents pending from you', mode: 'automated', from: 'accounts@kdkclient.com' },
-]
+// Bulk sends, by module. `event` is what triggered the send; `subject` is each email's own subject line.
+const CAMPAIGNS = {
+  GST: [
+    { event: 'GSTR-1 filing reminder', subject: 'GSTR-1 for Sep 2026 is due on 11 Oct', mode: 'automated', from: 'gst@kdkclient.com' },
+    { event: 'GSTR-3B filing reminder', subject: 'GSTR-3B for Sep 2026 is due on 20 Oct', mode: 'automated', from: 'gst@kdkclient.com' },
+    { event: 'GSTR-2A / 2B reconciliation ready', subject: 'GSTR-2B for Sep 2026 is available', mode: 'automated', from: 'gst@kdkclient.com' },
+    { event: 'GST notice received', subject: 'Notice received on the GST portal', mode: 'manual', from: 'gst@kdkclient.com' },
+  ],
+  TDS: [
+    { event: 'Form 16 issued', subject: 'Form 16 for FY 2025-26', mode: 'automated', from: 'tds@kdkclient.com' },
+    { event: 'Form 16A issued', subject: 'Form 16A for Q2 FY 2026-27', mode: 'automated', from: 'tds@kdkclient.com' },
+    { event: 'TDS return (24Q / 26Q) due', subject: 'TDS return for Q2 is due on 31 Oct', mode: 'automated', from: 'tds@kdkclient.com' },
+    { event: 'TDS challan payment reminder', subject: 'TDS payment for Sep 2026 is due on 7 Oct', mode: 'manual', from: 'tds@kdkclient.com' },
+  ],
+  ITR: [
+    { event: 'ITR-V acknowledgement received', subject: 'ITR-V acknowledgement for AY 2026-27', mode: 'automated', from: 'itr@kdkclient.com' },
+    { event: 'Documents pending for ITR', subject: 'Documents pending for your ITR filing', mode: 'automated', from: 'itr@kdkclient.com' },
+    { event: 'Advance tax due date', subject: 'Advance tax instalment is due on 15 Dec', mode: 'manual', from: 'itr@kdkclient.com' },
+    { event: 'Form 26AS / AIS available', subject: 'Your Form 26AS and AIS are ready to review', mode: 'manual', from: 'itr@kdkclient.com' },
+  ],
+}
 const STAFF = ['Kartik K.', 'Anita Shah', 'Rohit Mehta', 'Priyanka D.', 'System']
 const SINGLE_SUBJECTS = [
-  ['Welcome to our portal', 'automated'], ['Password reset request', 'automated'],
-  ['Your quote is attached', 'manual'], ['Follow-up on our call', 'manual'],
-  ['Document signed successfully', 'automated'], ['Meeting confirmation', 'manual'],
+  ['Your Form 16 is attached', 'manual'], ['GSTR-3B filed: acknowledgement', 'automated'],
+  ['ITR-V acknowledgement attached', 'automated'], ['Query on your TDS challan', 'manual'],
+  ['Reply to GST notice: documents needed', 'manual'], ['Your Form 26AS summary', 'automated'],
 ]
 
 function pickStatus(isOld) {
@@ -117,7 +126,8 @@ function generate() {
   const agent = '2d6f.5a1c7b9e0f3d4a8b'
 
   for (let c = 0; c < 48; c++) {
-    const tpl = CAMPAIGNS[c % CAMPAIGNS.length]
+    const mod = MODULES[c % 3]
+    const tpl = CAMPAIGNS[mod][Math.floor(c / 3) % CAMPAIGNS[mod].length]
     const requestId = `req-${(reqNo++).toString(16)}${Math.floor(rand() * 1e4)}`
     const sentAt = new Date(now - (c * 1.2 + rand()) * 864e5)
     const attachments = rand() < 0.5 ? 0 : 1 + Math.floor(rand() * 2)
@@ -126,16 +136,17 @@ function generate() {
     for (let i = 0; i < size; i++) {
       const person = pick(FIRST)
       // each email in a bulk send has its own subject and its own attachment count
-      const subj = tpl.subject.includes('{n}') ? tpl.subject.replace('{n}', `INV-${20000 + c * 500 + i}`) : `${tpl.subject} \u2013 ${person}`
+      const subj = `${tpl.subject} \u2013 ${person}`
       out.push(makeEmail({
-        idx: i, requestId, sentAt: new Date(sentAt.getTime() + i * 700), module: MODULES[c % 3], triggeredAt: new Date(sentAt.getTime() - (30 + ((c * 7) % 50)) * 1000),
+        idx: i, requestId, sentAt: new Date(sentAt.getTime() + i * 700), module: mod, triggeredAt: new Date(sentAt.getTime() - (30 + ((c * 7) % 50)) * 1000),
         subject: subj, from: tpl.from, triggerEvent: tpl.event,
-        type: 'bulk', mode: tpl.mode, attachments: attachments === 0 && rand() < .7 ? 0 : Math.floor(rand() * 4), sentBy, campaign: tpl.subject.replace('#{n}', ''), agent,
+        type: 'bulk', mode: tpl.mode, attachments: attachments === 0 && rand() < .7 ? 0 : Math.floor(rand() * 4), sentBy, campaign: tpl.event, agent,
       }))
     }
   }
   for (let s = 0; s < 700; s++) {
-    const [subject, mode] = pick(SINGLE_SUBJECTS)
+    const [baseSubject, mode] = pick(SINGLE_SUBJECTS)
+    const subject = `${baseSubject} (Ref ${Math.floor(rand() * 9000 + 1000)})`
     const requestId = `req-${(reqNo++).toString(16)}${Math.floor(rand() * 1e4)}`
     const sentAt = new Date(now - rand() * 59 * 864e5)
     out.push(makeEmail({

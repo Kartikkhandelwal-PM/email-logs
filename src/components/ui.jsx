@@ -45,7 +45,7 @@ export const fmtShortSec = (iso) => {
 // Date and time without seconds, for lists where seconds mean nothing
 export const fmtNoSec = (iso) => (iso ? new Date(iso).toLocaleString('en-GB', FMT) : '—')
 
-export const AttachCell = ({ n }) => (n ? <span className="attach"><Icon name="paperclip" size={14} />{n}</span> : <span className="muted">—</span>)
+export const AttachCell = ({ n }) => (n ? <span className="attach"><Icon name="paperclip" size={14} />{n.toLocaleString()}</span> : <span className="muted">—</span>)
 
 export function Pager({ page, total, pageSize, onPage, onSize, sizes, info }) {
   const pages = Math.max(1, Math.ceil(total / pageSize))
