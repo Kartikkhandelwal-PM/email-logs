@@ -608,3 +608,5 @@ table.logs tr.click.is-selected > td:first-child, table.logs tr.click.is-selecte
 /* no rubber-band bounce or scroll-chaining out of the table, and no scrollbar popping in and out */
 .panel-scroll { overscroll-behavior: contain; scrollbar-gutter: stable; }
 .drawer { overscroll-behavior: contain; }
+
+.controls .searchbox { max-width: 320px; flex: 1 1 200px; }

@@ -62,7 +62,7 @@ function Home() {
       (!filters.module.length || filters.module.includes(e.module)) &&
       (!filters.mode.length || filters.mode.includes(e.mode)) &&
       (!filters.sender.length || filters.sender.includes(e.sent_by)) &&
-      (!q || [e.log_id, e.to, e.subject].some((v) => v?.toLowerCase().includes(q))))
+      (!q || [e.log_id, e.to, e.subject, e.trigger_event].some((v) => v?.toLowerCase().includes(q))))
   }, [state.emails, filters.search, filters.module, filters.mode, filters.sender])
   // only senders who have something on the tab you are looking at
   const senders = useMemo(() => [...new Set(state.emails.filter((e) => e.type === (tab === 'bulk' ? 'bulk' : 'single')).map((e) => e.sent_by))].sort(), [state.emails, tab])
@@ -105,7 +105,7 @@ function Home() {
           <button className={tab === 'bulk' ? 'on' : ''} onClick={() => setTab('bulk')}><Icon name="layers" />Bulk emails</button>
           <button className={tab === 'single' ? 'on' : ''} onClick={() => setTab('single')}><Icon name="mail" />Single emails</button>
         </div>
-        <span className="searchbox"><Icon name="search" /><input type="search" className="search" placeholder="Search ID, recipient or subject" value={filters.search} onChange={(e) => setFilters({ ...filters, search: e.target.value })} /></span>
+        <span className="searchbox"><Icon name="search" /><input type="search" className="search" placeholder="Search ID, recipient, subject or trigger event" value={filters.search} onChange={(e) => setFilters({ ...filters, search: e.target.value })} /></span>
         <Filters filters={filters} onChange={setFilters} senders={senders} counts={counts} showStatus={tab === 'single'} />
       </div>
 

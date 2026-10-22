@@ -27,7 +27,7 @@ export default function BulkDetail({ requestId }) {
   useEffect(() => setPage(0), [search, status, pageSize, sort])
 
   const q = search.trim().toLowerCase()
-  const searched = useMemo(() => (q ? state.emails.filter((e) => e.to.toLowerCase().includes(q) || e.log_id.toLowerCase().includes(q)) : state.emails), [state.emails, q])
+  const searched = useMemo(() => (q ? state.emails.filter((e) => e.to.toLowerCase().includes(q) || e.log_id.toLowerCase().includes(q) || e.subject.toLowerCase().includes(q)) : state.emails), [state.emails, q])
   const counts = useMemo(() => countStatuses(searched), [searched])
   const filtered = useMemo(() => (status.length ? searched.filter((e) => status.includes(e.status)) : searched), [searched, status])
   const rows = useMemo(() => (sort ? sortRows(filtered, SORT_VALUES[sort.key], sort.dir) : filtered), [filtered, sort])
@@ -80,7 +80,7 @@ export default function BulkDetail({ requestId }) {
           </p>
 
           <div className="controls bulkbar">
-            <span className="searchbox"><Icon name="search" /><input type="search" className="search" placeholder="Search ID or recipient email" value={search} onChange={(e) => setSearch(e.target.value)} /></span>
+            <span className="searchbox"><Icon name="search" /><input type="search" className="search" placeholder="Search ID, recipient or subject" value={search} onChange={(e) => setSearch(e.target.value)} /></span>
             <FilterButton label="Status" icon="status" value={status} onChange={setStatus}
               options={[{ value: '', label: 'All statuses' }, ...Object.entries(STATUSES).map(([k, v]) => ({ value: k, label: v.label }))]} />
             {(search || status.length > 0) && (
